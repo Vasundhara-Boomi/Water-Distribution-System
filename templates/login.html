@@ -1,1 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='cs.css') }}">
+    <style>
+        .logo {
+            border-radius: 12px;
+        }
+    </style>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            var flashMessage = document.getElementById("flash-message");
+    
+            document.getElementById("login").addEventListener("change", function() {
+                document.getElementById("login-form").style.display = "block";
+                document.getElementById("signup-form").style.display = "none";
+                flashMessage.style.display = "none"; // Hide flash message
+            });
+    
+            document.getElementById("signup").addEventListener("change", function() {
+                document.getElementById("login-form").style.display = "none";
+                document.getElementById("signup-form").style.display = "block";
+                flashMessage.style.display = "none"; // Hide flash message
+            });
+    
+            // Check initial position of the slider
+            if (document.getElementById("signup").checked) {
+                flashMessage.style.display = "none"; // Hide flash message
+            }
+        });
+    </script>
+    
+</head>
+<body>
+    <div class="wrapper">
+        <div class="title-text">
+            <div>
+                <img src="{{ url_for('static', filename='Screenshot 2023-06-05 232305.png') }}" class="logo" alt="ocenaly" width="150" height="100" style="margin-left: 40px">
+            </div>
+        </div>
+        <div class="form-container">
+            <div class="slide-controls">
+                <input type="radio" name="slide" id="login" {% if selected_slide == 'login' %}checked{% endif %}>
+                <input type="radio" name="slide" id="signup" {% if selected_slide == 'signup' %}checked{% endif %}>
+                <label for="login" class="slide login">Login</label>
+                <label for="signup" class="slide signup">Signup</label>
+                <div class="slider-tab"></div>
+            </div>
+            <div class="form-inner">
+                <form action="{{ url_for('login') }}" method="POST" class="login" id="login-form" {% if selected_slide == 'signup' %}style="display: none;"{% endif %}>
 
+                    <div class="field">
+                        <input type="text" name="username" placeholder="Email Address" required>
+                    </div>
+                    <div class="field">
+                        <input type="password" name="password" placeholder="Password" required>
+                    </div>
+                    
+                    <div class="pass-link">
+                        <a href="{{ url_for('forgot_password') }}">Forgot password?</a>
+                    </div>
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                    <div id="flash-message" class="error-message">
+                        {{ messages[0][1] }}
+                    </div>
+                    {% endif %}
+                    {% endwith %}   
+                    <div class="field btn">
+                        <div class="btn-layer"></div>
+                        <input type="submit" value="Login">
+                    </div>
+                </form>
+               
+                <form action="{{ url_for('register') }}" method="POST" class="signup" id="signup-form" {% if selected_slide == 'login' %}style="display: none;"{% endif %}>
+                    <div class="field">
+                        <input type="text" name="username" placeholder="Email Address" required>
+                    </div>
+                    <div class="field">
+                        <input type="password" name="password" placeholder="Password" required>
+                    </div>
+                    <div class="field">
+                        <input type="password" name="confirm_password" placeholder="Confirm password" required>
+                    </div>
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                    <div id="flash-message" class="error-message">
+                        {{ messages[0][1] }}
+                    </div>
+                    {% endif %}
+                    {% endwith %}
+                    <div class="field btn">
+                        <div class="btn-layer"></div>
+                        <input type="submit" value="Signup">
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

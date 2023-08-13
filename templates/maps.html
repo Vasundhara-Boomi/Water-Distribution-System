@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>RESULT</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+  <style>
+    html, body, #map {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+    }
+    
+    /* Loading spinner styles */
+    .loader-container {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 9999;
+    }
+
+    .loader {
+      border: 8px solid #f3f3f3; /* Light grey */
+      border-top: 8px solid #3498db; /* Blue */
+      border-radius: 50%;
+      width: 60px;
+      height: 60px;
+      animation: spin 2s linear infinite;
+      margin: 20px auto;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <!-- Loading spinner -->
+  <div id="loader" class="loader-container">
+    <div class="loader"></div>
+  </div>
+
+  <div id="map"></div>
+
+  <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/he"></script>
+  <script>
+    // Initialize the map
+    var map = L.map('map').setView([51.505, -0.09], 13);
+
+    // Create a base tile layer
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors',
+      maxZoom: 18,
+    }).addTo(map);
+
+    // Show loading spinner
+    document.getElementById('loader').style.display = 'block';
+    
+    // Function to load and refresh the map data
+    function loadData() {
+      // Access the encoded data from Python within the <script> tag
+      var encodedData = "{{ data }}";
+
+      // Decode HTML entities
+      var decodedData = he.decode(encodedData);
+
+      // Parse the decoded JSON data
+      var data = JSON.parse(decodedData) || [];
+
+      if (data.length === 1 && data[0] === "no body") {
+        // Display message when no water bodies are found
+        document.getElementById('map').innerHTML = '<h2>NO WATER BODIES FOUND WITHIN 10KM RANGE :(</h2>';
+        document.getElementById('loader').style.display = 'none';
+        return;
+      }
+
+      var l1 = data[0];
+      var l2 = data[1];
+      var graphData = [];
+
+      for (var i = 0; i < l1.length; i++) {
+        var name = l1[i];
+        var coordinates = l2[i];
+        var lat = coordinates[0];
+        var lon = coordinates[1];
+        graphData.push({ name: name, lat: lat, lon: lon });
+      }
+
+      map.eachLayer(function (layer) {
+        if (layer instanceof L.Marker || layer instanceof L.Polyline) {
+          map.removeLayer(layer);
+        }
+      });
+
+      graphData.forEach(function (element) {
+        L.marker([element.lat, element.lon]).addTo(map).bindPopup(element.name);
+      });
+
+      var redarr = data[3];
+      var bluearr = data[2];
+
+      for (var element of redarr) {
+        var a = element[0];
+        var b = element[1];
+        var lineCoordinates = [
+          [graphData[a].lat, graphData[a].lon],
+          [graphData[b].lat, graphData[b].lon]
+        ];
+        L.polyline(lineCoordinates, { color: 'red' }).addTo(map);
+      }
+
+      for (var element of bluearr) {
+        var a = element[0];
+        var b = element[1];
+        var lineCoordinates2 = [
+          [graphData[a].lat, graphData[a].lon],
+          [graphData[b].lat, graphData[b].lon]
+        ];
+        L.polyline(lineCoordinates2, { color: 'blue' }).addTo(map);
+      }
+
+      var bounds = L.latLngBounds(graphData.map(function (element) {
+        return L.latLng(element.lat, element.lon);
+      }));
+      map.fitBounds(bounds);
+
+      document.getElementById('loader').style.display = 'none';
+    }
+
+    // Load initial data
+    loadData();
+  </script>
+</body>
+</html>
